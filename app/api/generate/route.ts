@@ -107,12 +107,48 @@ export async function POST(req: Request) {
     }
 
     if (!answer) {
-      // Konnte kein Modell eine Antwort liefern. Gebe Fehlerdetails in Entwicklung zurück.
       console.error("No model produced a response. Last error:", lastError);
-      if (process.env.NODE_ENV !== "production") {
-        return NextResponse.json({ error: "Failed to generate blueprint.", details: (lastError && (lastError as any).message) || String(lastError) }, { status: 500 });
+
+      // Versuch: Hugging Face Inference API als Fallback (falls API-Key gesetzt)
+      if (process.env.HUGGINGFACE_API_KEY) {
+        try {
+          const hfModel = process.env.HUGGINGFACE_MODEL || "gpt2";
+          const hfRes = await fetch(`https://api-inference.huggingface.co/models/${hfModel}`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ inputs: tutorPrompt, options: { wait_for_model: true } }),
+          });
+
+          const hfJson = await hfRes.json();
+          if (hfRes.ok) {
+            if (Array.isArray(hfJson) && hfJson.length > 0 && hfJson[0].generated_text) {
+              answer = hfJson[0].generated_text;
+            } else if (hfJson.generated_text) {
+              answer = hfJson.generated_text;
+            } else if (typeof hfJson === "string") {
+              answer = hfJson;
+            } else {
+              answer = JSON.stringify(hfJson);
+            }
+          } else {
+            console.error("Hugging Face error response:", hfRes.status, hfJson);
+            lastError = lastError || new Error(`HuggingFace ${hfRes.status}: ${JSON.stringify(hfJson)}`);
+          }
+        } catch (hfErr) {
+          console.error("HuggingFace call failed:", hfErr);
+          lastError = lastError || hfErr;
+        }
       }
-      throw lastError || new Error("No model produced a response");
+
+      if (!answer) {
+        if (process.env.NODE_ENV !== "production") {
+          return NextResponse.json({ error: "Failed to generate blueprint.", details: (lastError && (lastError as any).message) || String(lastError) }, { status: 500 });
+        }
+        throw lastError || new Error("No model produced a response");
+      }
     }
 
     // --- RAG LOGIK ENDE ---
