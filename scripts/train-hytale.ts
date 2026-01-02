@@ -25,7 +25,7 @@ async function main() {
   const files = fs.readdirSync(DOCS_DIR).filter((f) => f.endsWith(".txt"));
   console.log(`📂 Gefundene Dateien: ${files.length}`);
 
-  const model = genAI.getGenerativeModel({ model: "embedding-001" });
+ const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
 
   for (const file of files) {
     console.log(`➡️ Verarbeite: ${file}`);
