@@ -98,24 +98,37 @@ export async function POST(req: Request) {
           body: JSON.stringify({ inputs: tutorPrompt, options: { wait_for_model: true } }),
         });
 
-        const hfJson = await hfRes.json();
+        // Manche Fehler liefern keinen JSON-Body (z.B. plain "Not Found").
+        // Lese zuerst als Text und versuche dann JSON zu parsen.
+        const hfText = await hfRes.text();
+        let hfJson: any = null;
+        try {
+          hfJson = JSON.parse(hfText);
+        } catch (parseErr) {
+          // Kein JSON — hfText kann z.B. "Not Found" sein
+          hfJson = null;
+        }
+
         if (!hfRes.ok) {
-          console.error("Hugging Face error response:", hfRes.status, hfJson);
-          const msg = (hfJson && (hfJson as any).error) ? (hfJson as any).error : JSON.stringify(hfJson);
+          console.error("Hugging Face error response:", hfRes.status, hfJson ?? hfText);
+          const msg = hfJson && hfJson.error ? hfJson.error : hfText;
           if (process.env.NODE_ENV !== "production") {
             return NextResponse.json({ error: "Failed to generate blueprint.", details: `HuggingFace ${hfRes.status}: ${msg}` }, { status: 500 });
           }
           throw new Error(`HuggingFace ${hfRes.status}: ${msg}`);
         }
 
-        if (Array.isArray(hfJson) && hfJson.length > 0 && hfJson[0].generated_text) {
-          answer = hfJson[0].generated_text;
-        } else if ((hfJson as any).generated_text) {
-          answer = (hfJson as any).generated_text;
-        } else if (typeof hfJson === "string") {
-          answer = hfJson;
+        if (hfJson) {
+          if (Array.isArray(hfJson) && hfJson.length > 0 && hfJson[0].generated_text) {
+            answer = hfJson[0].generated_text;
+          } else if (hfJson.generated_text) {
+            answer = hfJson.generated_text;
+          } else {
+            answer = JSON.stringify(hfJson);
+          }
         } else {
-          answer = JSON.stringify(hfJson);
+          // Kein JSON, aber HTTP 200 — nimm den rohen Text
+          answer = hfText;
         }
       } catch (hfErr) {
         console.error("HuggingFace call failed:", hfErr);
