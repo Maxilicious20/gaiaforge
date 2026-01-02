@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Cinzel } from "next/font/google"; // <--- Cinzel importiert
 import "./globals.css";
-import { Providers } from "./providers"; // <--- WICHTIG
+import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
+const cinzel = Cinzel({ subsets: ["latin"], variable: '--font-cinzel' }); // <--- Variable definiert
 
 export const metadata: Metadata = {
   title: "GaiaForge",
-  description: "AI Powered Hytale Modding",
+  description: "AI Powered Hytale Modding Tutor",
 };
 
 export default function RootLayout({
@@ -17,8 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Providers> {/* <--- Hier umschließen */}
+      {/* Beide Fonts hier laden */}
+      <body className={`${inter.className} ${cinzel.variable}`}>
+        <Providers>
           {children}
         </Providers>
       </body>
