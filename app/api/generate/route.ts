@@ -103,8 +103,11 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error("AI Error:", error);
-    // Für Debugging: Gebe die Fehlermeldung mit zurück (hilft beim Beheben).
+    // Für Debugging: Gebe die Fehlermeldung nur in non-production zurück.
     const message = error && typeof error === "object" && "message" in error ? (error as any).message : String(error);
-    return NextResponse.json({ error: "Failed to generate blueprint.", details: message }, { status: 500 });
+    if (process.env.NODE_ENV !== "production") {
+      return NextResponse.json({ error: "Failed to generate blueprint.", details: message }, { status: 500 });
+    }
+    return NextResponse.json({ error: "Failed to generate blueprint." }, { status: 500 });
   }
 }
