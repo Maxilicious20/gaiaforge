@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./providers"; // <--- NEU IMPORTIEREN
+import { Providers } from "./providers"; // <--- WICHTIG
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "GaiaForge",
-  description: "Hytale AI Modding Tool",
+  description: "AI Powered Hytale Modding",
 };
 
 export default function RootLayout({
@@ -14,14 +17,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;500;700&display=swap" rel="stylesheet" />
-      </head>
-      <body>
-        {/* Hier wickeln wir die App ein */}
-        <Providers>
+      <body className={inter.className}>
+        <Providers> {/* <--- Hier umschließen */}
           {children}
         </Providers>
       </body>

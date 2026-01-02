@@ -1,94 +1,163 @@
-import Link from "next/link";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import Image from "next/image";
 
 export default function Home() {
+  const { data: session } = useSession();
+  const [prompt, setPrompt] = useState("");
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState("");
+
+  // Checkt nach dem Login, ob noch ein Prompt wartet
+  useEffect(() => {
+    const savedPrompt = localStorage.getItem("pendingPrompt");
+    if (session && savedPrompt) {
+      // setState asynchron aufrufen, um synchrones Setzen innerhalb des Effects zu vermeiden
+      setTimeout(() => {
+        setPrompt(savedPrompt);
+        // Hier würde später die KI automatisch starten
+        // alert("Welcome back! Ready to execute: " + savedPrompt);
+        localStorage.removeItem("pendingPrompt");
+      }, 0);
+    }
+  }, [session]);
+
+  const handleGenerate = () => {
+    if (!prompt.trim()) return;
+
+    if (!session) {
+      // Nicht eingeloggt -> Prompt merken und Modal zeigen
+      setPendingPrompt(prompt);
+      localStorage.setItem("pendingPrompt", prompt);
+      setShowLoginModal(true);
+    } else {
+      // Eingeloggt -> Hier startet später die KI
+      console.log("Generating with prompt:", prompt);
+      alert("AI Generation started for: " + prompt);
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-emerald-500 selection:text-white">
+    <main className="relative min-h-screen flex flex-col items-center justify-center text-white overflow-hidden bg-[#111]">
       
-      {/* Navbar Platzhalter */}
-      <nav className="fixed w-full z-50 flex justify-between items-center px-8 py-4 bg-black/50 backdrop-blur-md border-b border-white/10">
-        <div className="text-2xl font-bold tracking-tighter text-emerald-400">
-          GaiaForge
+      {/* Background Image Fix */}
+      <div className="absolute inset-0 z-0">
+        <Image 
+          src="/hero-bg.jpg" // Stelle sicher, dass das Bild exakt so in public liegt
+          alt="Background" 
+          fill 
+          className="object-cover opacity-30"
+          priority
+        />
+        <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a/80]" />
+      </div>
+
+      {/* Navbar (Minimal) */}
+      <nav className="absolute top-0 w-full p-6 flex justify-between items-center z-20">
+        <div className="text-xl font-bold tracking-widest text-emerald-500 uppercase">
+          GaiaForge <span className="text-xs text-gray-500 align-top">Alpha</span>
         </div>
-        <div className="space-x-4">
-            <Link href="/api/auth/signin" className="px-4 py-2 text-sm font-medium text-white/80 hover:text-white transition">
+        <div>
+          {session ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-300 hidden sm:block">{session.user?.email}</span>
+              <button 
+                onClick={() => signOut()}
+                className="px-4 py-2 text-sm bg-white/5 border border-white/10 hover:bg-red-500/20 hover:border-red-500/50 transition rounded"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setShowLoginModal(true)}
+              className="px-4 py-2 text-sm bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-500/40 transition rounded text-emerald-400"
+            >
               Login
-            </Link>
-            <Link href="/api/auth/signin" className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 rounded-lg transition shadow-[0_0_15px_rgba(16,185,129,0.4)]">
-              Get Started
-            </Link>
+            </button>
+          )}
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative h-screen flex flex-col justify-center items-center text-center px-4 overflow-hidden">
-        {/* Hintergrundbild (Muss in public/hero-bg.jpg liegen) */}
-        <div className="absolute inset-0 z-0 opacity-40">
-           {/* Falls du noch kein Bild hast, nutzen wir diesen Gradient als Fallback */}
-           <div className="absolute inset-0 bg-gradient-to-b from-emerald-900/20 via-[#0a0a0a] to-[#0a0a0a]" />
-           {/* <Image src="/hero-bg.jpg" alt="Hytale World" fill className="object-cover" /> */}
-        </div>
-
-        <div className="z-10 max-w-4xl space-y-6">
-          <div className="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider text-emerald-300 uppercase bg-emerald-900/30 rounded-full border border-emerald-500/30">
-            Ready for Hytale Launch
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-white drop-shadow-2xl">
-            Forge Your Vision with <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">
-              AI Power
-            </span>
+      {/* Main Interface (Creative Mode Style) */}
+      <div className="relative z-10 w-full max-w-3xl px-4 flex flex-col gap-6 animate-in fade-in zoom-in duration-500">
+        
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight text-white/90">
+            What do you want to create?
           </h1>
-          
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto">
-            Erstelle Hytale Models, JSON-Config und Skripte in Sekunden. 
-            GaiaForge ist dein KI-Copilot für das nächste große Abenteuer.
+          <p className="text-gray-400 text-sm">
+            Describe a weapon, entity, or mechanic. GaiaForge will generate the code.
           </p>
+        </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
-            <button className="px-8 py-4 text-lg font-bold bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-xl hover:scale-105 transition transform shadow-[0_0_30px_rgba(16,185,129,0.3)]">
-              Start Modding Free
-            </button>
-            <button className="px-8 py-4 text-lg font-bold bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition backdrop-blur-sm">
-              View Features
+        {/* Input Box - Console Style */}
+        <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-lg p-2 shadow-2xl ring-1 ring-white/5 focus-within:ring-emerald-500/50 transition-all">
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="e.g. A flaming sword that summons skeletons when hitting a player..."
+            className="w-full h-32 bg-transparent text-lg p-4 outline-none resize-none text-emerald-50 placeholder:text-gray-600 font-mono"
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleGenerate();
+                }
+            }}
+          />
+          <div className="flex justify-between items-center px-4 pb-2 pt-2 border-t border-white/10">
+            <div className="text-xs text-gray-500 font-mono">Hytale API: Waiting for context...</div>
+            <button 
+              onClick={handleGenerate}
+              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded transition shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+            >
+              Initialize Forge
             </button>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Features Grid */}
-      <section className="py-24 px-4 bg-[#0a0a0a]">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Feature 1 */}
-          <div className="p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-emerald-500/50 transition group">
-            <div className="w-12 h-12 mb-4 rounded-lg bg-emerald-900/50 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition">
-              ⚡
-            </div>
-            <h3 className="text-xl font-bold mb-2 text-white">Instant Assets</h3>
-            <p className="text-gray-400">Generiere JSON-Configs für Waffen und Mobs durch einfache Textbeschreibung.</p>
-          </div>
+      {/* Login Modal Popup */}
+      {showLoginModal && !session && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#111] border border-white/10 p-8 rounded-xl max-w-md w-full shadow-2xl relative">
+            <button 
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-white"
+            >
+              ✕
+            </button>
+            
+            <h2 className="text-2xl font-bold mb-2">Access Required</h2>
+            <p className="text-gray-400 mb-6 text-sm">
+              To execute this generation and save your assets, you need to be logged in.
+            </p>
 
-          {/* Feature 2 */}
-          <div className="p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/50 transition group">
-            <div className="w-12 h-12 mb-4 rounded-lg bg-blue-900/50 flex items-center justify-center text-blue-400 group-hover:scale-110 transition">
-              🧠
+            <div className="space-y-3">
+              <button 
+                onClick={() => signIn("google")}
+                className="w-full py-3 bg-white text-black font-bold rounded hover:bg-gray-200 transition flex justify-center items-center gap-2"
+              >
+                Continue with Google
+              </button>
+              <button 
+                onClick={() => signIn("discord")}
+                className="w-full py-3 bg-[#5865F2] text-white font-bold rounded hover:bg-[#4752C4] transition"
+              >
+                Continue with Discord
+              </button>
             </div>
-            <h3 className="text-xl font-bold mb-2 text-white">Smart Scripting</h3>
-            <p className="text-gray-400">Unsere KI versteht die Hytale API (sobald released) und schreibt Java-Code für dich.</p>
-          </div>
-
-          {/* Feature 3 */}
-          <div className="p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition group">
-            <div className="w-12 h-12 mb-4 rounded-lg bg-purple-900/50 flex items-center justify-center text-purple-400 group-hover:scale-110 transition">
-              💎
-            </div>
-            <h3 className="text-xl font-bold mb-2 text-white">Credits System</h3>
-            <p className="text-gray-400">Behalte die volle Kontrolle über deine Generationen und Projekte in deinem Dashboard.</p>
+            
+            {pendingPrompt && (
+              <div className="mt-6 p-3 bg-emerald-900/20 border border-emerald-500/20 rounded text-xs text-emerald-400 font-mono">
+                {'>'} Prompt saved. Will execute after login.
+              </div>
+            )}
           </div>
         </div>
-      </section>
-
+      )}
     </main>
   );
 }
