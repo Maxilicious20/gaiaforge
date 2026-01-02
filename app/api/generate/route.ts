@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
-import { handler as authOptions } from "../auth/[...nextauth]/route"; // Importiere deine Auth Config
+import { authOptions } from "../auth/[...nextauth]/route"; // Importiere deine Auth Config
 
 const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   // 1. Session prüfen (Ist der User eingeloggt?)
-  // @ts-ignore
   const session = await getServerSession(authOptions);
   
   // Alternative Methode um Session zu holen, falls authOptions Import zickt:
@@ -57,7 +56,7 @@ export async function POST(req: Request) {
   // 5. Credit abziehen (Wir ziehen trotzdem ab, um das System zu simulieren)
   // Bei deinem Admin-Account (999999) ist das egal, bei anderen zählt es runter.
   const updatedUser = await prisma.user.update({
-    where: { email: user.email },
+    where: { email: user.email! },
     data: { credits: user.credits - 1 },
   });
 

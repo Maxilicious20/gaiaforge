@@ -77,7 +77,7 @@ export default function Home() {
           className="object-cover opacity-30"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a/80]" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a/80]" />
       </div>
 
       {/* Navbar mit Credits Counter */}
@@ -195,7 +195,7 @@ export default function Home() {
             <button 
               onClick={handleGenerate}
               disabled={isLoading}
-              className="px-8 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-lg transition transform hover:scale-105 shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
+              className="px-8 py-2.5 bg-linear-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold rounded-lg transition transform hover:scale-105 shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-wait"
             >
               <span>{isLoading ? "Processing..." : "Generate"}</span>
               <span className="text-xs opacity-70 bg-black/20 px-1.5 py-0.5 rounded">-1 💎</span>
