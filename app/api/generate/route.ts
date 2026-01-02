@@ -5,8 +5,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { authOptions } from "../auth/[...nextauth]/route";
 
 const prisma = new PrismaClient();
-// Wir nutzen deinen Key aus der .env Datei
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 
 export async function POST(req: Request) {
   // 1. Session prüfen (Sicherheit)
@@ -22,6 +20,9 @@ export async function POST(req: Request) {
     console.error("Missing GOOGLE_API_KEY environment variable");
     return NextResponse.json({ error: "Missing GOOGLE_API_KEY environment variable." }, { status: 500 });
   }
+
+  // GoogleGenerativeAI erst hier erzeugen, damit die Umgebungsvariablen sicher geladen sind
+  const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 
   // 2. Credits prüfen
   const user = await prisma.user.findUnique({
