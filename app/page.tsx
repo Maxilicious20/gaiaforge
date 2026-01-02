@@ -187,9 +187,9 @@ export default function Home() {
           
           <div className="flex justify-between items-center px-4 py-3 border-t border-white/10 bg-black/20">
             <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-500' : 'bg-emerald-500'} animate-pulse`}></span>
+                <span className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-500' : 'bg-red-500'} animate-pulse`}></span>
                 <span className="text-xs text-gray-500 font-mono">
-                    {isLoading ? "Forging..." : "System Ready"}
+                    {isLoading ? "Forging..." : "System not Ready"}
                 </span>
             </div>
             <button 
