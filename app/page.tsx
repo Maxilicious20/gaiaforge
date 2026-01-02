@@ -168,8 +168,8 @@ export default function Home() {
           </div>
 
           {/* NEU: Disclaimer Warning Box */}
-          <div className="bg-yellow-900/20 border-b border-yellow-500/20 px-4 py-2 text-[10px] text-yellow-500 font-mono flex items-center gap-2">
-            ⚠️ NOTICE: Generation for <strong>{category.toUpperCase()}</strong> will be available after Hytale Early Access release. Results may be unstable due to game API changes.
+          <div className="bg-yellow-900/20 border-b border-yellow-500/20 px-4 py-2 text-xs text-yellow-500 font-sans leading-snug">
+            ⚠️ NOTICE: Generation for <strong className="font-bold text-yellow-300">{category.toUpperCase()}</strong> will be available after Hytale Early Access release. Results may be unstable due to game API changes.
           </div>
 
           <textarea
