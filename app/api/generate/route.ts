@@ -1,69 +1,101 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
-import { authOptions } from "../auth/[...nextauth]/route"; // Importiere deine Auth Config
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 const prisma = new PrismaClient();
+// Wir nutzen deinen Key aus der .env Datei
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "");
 
 export async function POST(req: Request) {
-  // 1. Session prüfen (Ist der User eingeloggt?)
+  // 1. Session prüfen (Sicherheit)
+  // @ts-ignore
   const session = await getServerSession(authOptions);
   
-  // Alternative Methode um Session zu holen, falls authOptions Import zickt:
-  // const session = await getServerSession(); 
-
   if (!session || !session.user || !session.user.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 2. User aus Datenbank holen (um aktuelle Credits zu prüfen)
+  // 2. Credits prüfen
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
   });
 
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+  if (!user || user.credits <= 0) {
+    return NextResponse.json({ error: "Not enough credits." }, { status: 403 });
   }
 
-  // 3. Credits prüfen
-  if (user.credits <= 0) {
-    return NextResponse.json({ error: "Not enough credits. You receive 6 free credits monthly." }, { status: 403 });
+  try {
+    const body = await req.json();
+    const { prompt, category } = body;
+
+    // --- RAG LOGIK START ---
+
+    // A. Embeddings für die Frage erstellen (Was sucht der User?)
+    // Wichtig: Wir nutzen dasselbe Modell wie beim Training (text-embedding-004)
+    const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+    const embeddingResult = await embeddingModel.embedContent(prompt);
+    const vector = embeddingResult.embedding.values;
+    
+    // Vektor für SQL formatieren
+    const vectorString = `[${vector.join(",")}]`;
+
+    // B. Die Datenbank nach Wissen fragen (Vektor-Suche)
+    // Wir suchen die 3 passendsten Textstellen aus unserer KnowledgeBase
+    // "ORDER BY embedding <=> vector" bedeutet: Finde, was mathematisch am nächsten liegt.
+    const relevantDocs = await prisma.$queryRaw`
+      SELECT content, source
+      FROM "KnowledgeBase"
+      ORDER BY embedding <=> ${vectorString}::vector
+      LIMIT 3;
+    ` as any[];
+
+    // C. Das Wissen zusammenbauen (Kontext)
+    const contextText = relevantDocs.map(doc => `SOURCE (${doc.source}):\n${doc.content}`).join("\n\n");
+
+    // D. Den "Lehrer" instruieren (System Prompt)
+    const tutorPrompt = `
+      Du bist der GaiaForge Mentor für Hytale Modding.
+      
+      DEINE MISSION:
+      Der User möchte etwas über "${category}" wissen.
+      Erstelle einen LERNPLAN / BLUEPRINT, wie er das umsetzen kann.
+      
+      DEINE REGELN:
+      1. Nutze für Fakten NUR den folgenden KONTEXT (Offizielle Hytale Docs).
+      2. Wenn im Kontext nichts dazu steht, sage ehrlich, dass es dazu noch keine offiziellen Infos gibt. Erfinde NICHTS.
+      3. Gib KEINEN fertigen Code zum Kopieren. Zeige nur Schnipsel als Beispiele.
+      4. Erkläre die Logik (z.B. "Du brauchst eine JSON Datei, darin das Feld X...").
+      
+      HIER IST DER KONTEXT (WISSEN):
+      ${contextText}
+
+      USER FRAGE:
+      ${prompt}
+    `;
+
+    // E. Die Antwort generieren (Gemini 1.5 Pro)
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const result = await model.generateContent(tutorPrompt);
+    const answer = result.response.text();
+
+    // --- RAG LOGIK ENDE ---
+
+    // 3. Credits abziehen
+    const updatedUser = await prisma.user.update({
+      where: { email: user.email as string },
+      data: { credits: user.credits - 1 },
+    });
+
+    return NextResponse.json({
+      success: true,
+      credits: updatedUser.credits,
+      message: answer, // Das ist jetzt der echte KI-Text!
+    });
+
+  } catch (error) {
+    console.error("AI Error:", error);
+    return NextResponse.json({ error: "Failed to generate blueprint." }, { status: 500 });
   }
-
-  // 4. Request Daten lesen
-  const body = await req.json();
-  const { prompt, category } = body;
-
-  // --- ANFANG KI CODE (DEAKTIVIERT) ---
-  /*
-  // Hier kommt später der echte Call hin, wenn Hytale draußen ist.
-  // Aktuell deaktiviert, da wir keine echten APIs haben.
-  
-  const aiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent", {
-     method: "POST",
-     body: JSON.stringify({
-        contents: [{
-            parts: [{
-                text: `Generate a Hytale ${category} JSON for: ${prompt}. Use the official schema.`
-            }]
-        }]
-     })
-  });
-  const aiData = await aiResponse.json();
-  */
-  // --- ENDE KI CODE ---
-
-  // 5. Credit abziehen (Wir ziehen trotzdem ab, um das System zu simulieren)
-  // Bei deinem Admin-Account (999999) ist das egal, bei anderen zählt es runter.
-  const updatedUser = await prisma.user.update({
-    where: { email: user.email! },
-    data: { credits: user.credits - 1 },
-  });
-
-  // 6. Antwort zurückgeben
-  return NextResponse.json({
-    success: true,
-    credits: updatedUser.credits,
-    message: `Request registered for category: ${category.toUpperCase()}.\n\nNOTE: Actual generation is paused until Hytale Early Access Release to prevent generating broken/invalid code. Your prompt has been logged.`,
-  });
 }
