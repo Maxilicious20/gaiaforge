@@ -82,10 +82,43 @@ export async function POST(req: Request) {
       ${prompt}
     `;
 
-    // E. Die Antwort generieren (Gemini 1.5 Pro)
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-    const result = await model.generateContent(tutorPrompt);
-    const answer = result.response.text();
+    // E. Die Antwort generieren
+    // Versuche zuerst das gewünschte Modell, bei 404 (nicht verfügbar) nutze Fallbacks.
+    const preferredModels = ["gemini-1.5-pro", "gemini-1.5", "text-bison-001", "models/text-bison-001", "chat-bison-001"];
+    let answer = "";
+    let lastError: any = null;
+
+    for (const m of preferredModels) {
+      try {
+        const candidate = genAI.getGenerativeModel({ model: m });
+        const res = await candidate.generateContent(tutorPrompt);
+        answer = res.response?.text ? res.response.text() : String(res);
+        break;
+      } catch (err) {
+        lastError = err;
+        // Wenn 404: Modell nicht verfügbar für diese API-Version, probiere nächsten
+        const status = (err && typeof err === "object" && "status" in err) ? (err as any).status : null;
+        if (status !== 404) {
+          // Nicht-404 Fehler — breche ab und wir geben den Fehler weiter
+          throw err;
+        }
+        console.warn(`Model ${m} not available, trying next fallback.`);
+      }
+    }
+
+    if (!answer) {
+      // Liste Modelle (nur zu Debugging in non-production)
+      try {
+        const modelsList = await genAI.listModels();
+        console.error("Available models:", modelsList);
+        if (process.env.NODE_ENV !== "production") {
+          return NextResponse.json({ error: "Failed to generate blueprint.", details: (lastError && lastError.message) || String(lastError), availableModels: modelsList }, { status: 500 });
+        }
+      } catch (listErr) {
+        console.error("Failed to list models:", listErr);
+      }
+      throw lastError || new Error("No model produced a response");
+    }
 
     // --- RAG LOGIK ENDE ---
 
