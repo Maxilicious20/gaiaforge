@@ -47,3 +47,15 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ success: true });
 }
+
+export async function GET(req: Request) {
+  // Return current user profile (username, backgroundImage)
+  // @ts-ignore
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const user = await prisma.user.findUnique({ where: { email: session.user.email } });
+  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+  return NextResponse.json({ username: user.username ?? "", backgroundImage: user.backgroundImage });
+}

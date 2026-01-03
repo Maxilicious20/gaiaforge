@@ -5,31 +5,50 @@ import Link from "next/link";
 import Image from "next/image";
 
 // Die verfügbaren Bilder im public Ordner
-const backgrounds = ["hero-bg.jpg", "1hero-bg.jpg", "2hero-bg.jpg", "3hero-bg.jpg"];
+const backgrounds = ["hero-bg.jpg", "1hero-bg.jpg", "2hero-bg.jpg", "3hero-bg.jpg", "4hero-bg.jpg"];
 
 export default function SettingsPage() {
-  const { data: session, update } = useSession();
-  const [username, setUsername] = useState("");
-  const [selectedBg, setSelectedBg] = useState("hero-bg.jpg");
+    const { data: session, update } = useSession();
+    const [username, setUsername] = useState("");
+    const [selectedBg, setSelectedBg] = useState("hero-bg.jpg");
   const [msg, setMsg] = useState("");
+
+    useEffect(() => {
+        // Load current stored profile data from the server
+        const load = async () => {
+            const res = await fetch("/api/user/settings");
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.username !== undefined) setUsername(data.username || "");
+            if (data.backgroundImage) setSelectedBg(data.backgroundImage);
+        };
+        load();
+    }, []);
 
   // Wir holen uns die aktuellen Daten vom User (nicht nur Session, sondern echte DB Daten)
   // Einfachheitshalber nehmen wir hier an, session hat die Daten nach einem Relogin/Update
   // Für PROD sollten wir hier einen Fetch machen. Wir simulieren es kurz:
 
-  const handleSave = async () => {
-    const res = await fetch("/api/user/settings", {
-      method: "POST",
-      body: JSON.stringify({ username, bgImage: selectedBg }),
-    });
-    const data = await res.json();
-    if (data.error) setMsg("❌ " + data.error);
-    else {
-        setMsg("✅ Profile updated! Refreshing...");
-        await update(); // Session aktualisieren
-        window.location.reload(); // Seite neu laden für neuen Hintergrund
-    }
-  };
+    const handleSave = async () => {
+        const res = await fetch("/api/user/settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, bgImage: selectedBg }),
+        });
+        const data = await res.json();
+        if (data.error) setMsg("❌ " + data.error);
+        else {
+                setMsg("✅ Profile updated!");
+                // refresh server data and session
+                await update();
+                const refreshed = await fetch("/api/user/settings");
+                if (refreshed.ok) {
+                    const d = await refreshed.json();
+                    if (d.backgroundImage) setSelectedBg(d.backgroundImage);
+                    if (d.username !== undefined) setUsername(d.username || "");
+                }
+        }
+    };
 
   return (
     <div className="min-h-screen bg-black text-white p-10 flex flex-col items-center relative overflow-hidden">
