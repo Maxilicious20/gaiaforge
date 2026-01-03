@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   // 2. Credits prüfen
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-  });
+  }) as any;
 
   if (!user || user.credits <= 0) {
     return NextResponse.json({ error: "Not enough credits." }, { status: 403 });
@@ -148,8 +148,8 @@ export async function POST(req: Request) {
     // 3. Credits abziehen
     const updatedUser = await prisma.user.update({
       where: { email: user.email as string },
-      data: { credits: user.credits - 1 },
-    });
+      data: { credits: user.credits - 1 } as any,
+    }) as any;
 
     return NextResponse.json({
       success: true,

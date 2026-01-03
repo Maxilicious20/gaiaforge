@@ -54,7 +54,7 @@ export default function Home() {
       </nav>
 
       {/* Hero / Search */}
-      <section className="py-20 text-center bg-gradient-to-b from-[#151b2b] to-[#0b0f19]">
+    <section className="py-20 text-center bg-linear-to-b from-[#151b2b] to-[#0b0f19]">
         <h1 className="text-5xl font-extrabold text-white mb-4">Discover Hytale Mods</h1>
         <p className="text-gray-400 max-w-xl mx-auto mb-8">
             The community repository. Upload your creations, get feedback, and expand your world.

@@ -4,7 +4,7 @@ import { authOptions } from "../auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import AdminControls from "../../components/AdminControls"; // Das bauen wir gleich als Client Component
 
-const prisma = new PrismaClient() as any;
+const prisma = new PrismaClient();
 
 export default async function AdminPage() {
   // @ts-ignore
@@ -28,7 +28,7 @@ export default async function AdminPage() {
       <div className="space-y-4">
         {pendingMods.length === 0 && <p className="text-gray-500">No pending mods. All clear!</p>}
 
-        {pendingMods.map((mod: any) => (
+        {pendingMods.map((mod) => (
           <div key={mod.id} className="bg-gray-900 border border-gray-700 p-6 rounded-lg flex justify-between items-center">
             <div>
                 <h2 className="text-xl font-bold text-emerald-400">{mod.title}</h2>

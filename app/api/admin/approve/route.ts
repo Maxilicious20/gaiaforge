@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-const prisma = new PrismaClient() as any;
+const prisma = new PrismaClient();
 
 // HIER DEINE E-MAIL EINTRAGEN
 const ADMIN_EMAIL = "emergencyhessen@gmail.com";

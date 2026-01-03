@@ -16,7 +16,8 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
-  
+  credits       Int       @default(0)
+
   // Relationen
   mods          Mod[]     @relation("UserMods")
   comments      Comment[]
