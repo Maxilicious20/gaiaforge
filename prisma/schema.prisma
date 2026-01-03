@@ -9,16 +9,19 @@ generator client {
 
 // User bleibt, aber ohne Credits
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
+  id                 String    @id @default(cuid())
+  name               String?
+  email              String?   @unique
+  emailVerified      DateTime?
+  image              String?
+  
+  // NEU: Hytale Profil Infos
+  username           String?   @unique // Der eigene Username
+  lastUsernameChange DateTime? // Damit wir die 3 Tage Sperre prüfen können
+  backgroundImage    String    @default("hero-bg.jpg") // Das gewählte Hintergrundbild
+
   accounts      Account[]
   sessions      Session[]
-  credits       Int       @default(0)
-
-  // Relationen
   mods          Mod[]     @relation("UserMods")
   comments      Comment[]
   votes         Vote[]
