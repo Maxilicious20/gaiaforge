@@ -1,15 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export async function GET(
-  req: Request,
-  { params }: { params: { modId: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ modId: string }> }
 ) {
   try {
+    const { modId } = await params;
     const mod = await prisma.mod.findUnique({
-      where: { id: params.modId },
+      where: { id: modId },
       include: { author: true }
     });
 
