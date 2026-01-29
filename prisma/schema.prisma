@@ -20,6 +20,11 @@ model User {
   lastUsernameChange DateTime? // Damit wir die 3 Tage Sperre prüfen können
   backgroundImage    String    @default("hero-bg.jpg") // Das gewählte Hintergrundbild
 
+  // Ban System
+  isBanned           Boolean   @default(false)
+  banReason          String?
+  bannedAt           DateTime?
+
   accounts      Account[]
   sessions      Session[]
   mods          Mod[]     @relation("UserMods")
