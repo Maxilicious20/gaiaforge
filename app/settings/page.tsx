@@ -3,6 +3,7 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { notifyBackgroundChange } from "@/app/components/GlobalBackground";
 
 // Die verfügbaren Bilder im public Ordner
 const backgrounds = ["hero-bg.jpg", "1hero-bg.jpg", "2hero-bg.jpg", "3hero-bg.jpg", "4hero-bg.jpg"];
@@ -39,6 +40,8 @@ export default function SettingsPage() {
         if (data.error) setMsg("❌ " + data.error);
         else {
                 setMsg("✅ Profile updated!");
+                // Notify GlobalBackground of the change
+                notifyBackgroundChange(selectedBg);
                 // refresh server data and session
                 await update();
                 const refreshed = await fetch("/api/user/settings");
