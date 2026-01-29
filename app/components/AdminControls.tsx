@@ -101,6 +101,3 @@ export default function AdminControls({ modId }: { modId: string }) {
     </div>
   );
 }
-    </div>
-  );
-}
