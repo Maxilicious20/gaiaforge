@@ -37,7 +37,7 @@ export default function Home() {
             className="object-cover opacity-40"
             priority
          />
-         <div className="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-[#0b0f19]/80 to-transparent" />
+         <div className="absolute inset-0 bg-linear-to-t from-[#0b0f19] via-[#0b0f19]/80 to-transparent" />
       </div>
 
       {/* 2. NAVBAR (Verbessert) */}

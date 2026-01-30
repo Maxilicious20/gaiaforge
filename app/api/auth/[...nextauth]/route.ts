@@ -11,8 +11,8 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       authorization: {
         params: {
           prompt: "consent",
@@ -20,22 +20,39 @@ export const authOptions: NextAuthOptions = {
           response_type: "code",
         },
       },
+      allowDangerousEmailAccountLinking: true,
     }),
     DiscordProvider({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      clientId: process.env.DISCORD_CLIENT_ID || "",
+      clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
+  pages: {
+    signIn: "/auth/signin",
+    error: "/auth/error",
+  },
   callbacks: {
     async session({ session, user }) {
-      // Hier schieben wir die Credits von der Datenbank in die Session
+      // Hier schieben wir die Profil-Daten von der Datenbank in die Session
       if (session.user) {
-        // @ts-expect-error: next-auth session user extended at runtime with `credits`
-        session.user.credits = user.credits;
+        session.user.id = user.id;
+        session.user.email = user.email || "";
+        session.user.name = user.name || "";
+        session.user.image = user.image || "";
+        // @ts-expect-error: next-auth session user extended at runtime
+        session.user.backgroundImage = user.backgroundImage;
+        // @ts-expect-error: next-auth session user extended at runtime
+        session.user.username = user.username;
       }
       return session;
     },
+    async signIn({ user, account, profile, email, credentials }) {
+      // Immer erlauben
+      return true;
+    },
   },
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(authOptions);

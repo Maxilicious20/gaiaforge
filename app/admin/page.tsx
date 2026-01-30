@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import AdminControls from "../components/AdminControls";
 
 const prisma = new PrismaClient();
@@ -40,9 +41,14 @@ export default async function AdminPage() {
       <div className="relative z-10">
         
         {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-red-500 mb-2">🛡️ Admin Command Center</h1>
-          <p className="text-gray-400">GaiaForge Administration Dashboard</p>
+        <div className="mb-12 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-red-500 mb-2">🛡️ Admin Command Center</h1>
+            <p className="text-gray-400">GaiaForge Administration Dashboard</p>
+          </div>
+          <Link href="/" className="text-emerald-400 hover:text-emerald-300 underline">
+            ← Back to Home
+          </Link>
         </div>
 
         {/* Statistiken Grid */}
