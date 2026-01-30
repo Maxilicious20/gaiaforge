@@ -36,6 +36,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, user }) {
       // Hier schieben wir die Profil-Daten von der Datenbank in die Session
       if (session.user) {
+        // @ts-expect-error: next-auth session user extended at runtime
         session.user.id = user.id;
         session.user.email = user.email || "";
         session.user.name = user.name || "";
